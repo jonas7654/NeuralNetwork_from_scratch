@@ -7,32 +7,41 @@
 #define BUFFER_SIZE 10000 // How to set this properly
 #define IMAGE_SIZE 784
 #define N_IMAGES 60000
+#define FILE_PATH "../data/MNIST/mnist_train/mnist_train.csv"
 
 Matrix* read_mnist() {
-  FILE* file = fopen("../../data/MNIST/mnist_train.csv", "r");
+  FILE* file = fopen(FILE_PATH, "r");
   if(!file) {
     perror("error opening mnist");
     return 0;
   }
 
   // Allocate train matrix  
-  Matrix* mnist_train_matrix = new Matrix(N_IMAGES, IMAGE_SIZE, false);
+  // IMAGE_SIZE + 1 since I need to extract the label as well
+  Matrix* mnist_train_matrix = new Matrix(N_IMAGES, IMAGE_SIZE + 1, false);
   size_t n_cols = mnist_train_matrix->n_cols;
-  size_t n_rows = mnist_train_matrix->n_rows;
-
+  
   char line[BUFFER_SIZE];
   size_t count = 0;
 
+  // populate the matrix
   while(fgets(line, BUFFER_SIZE, file) && count < N_IMAGES) {
     char* tok = strtok(line, ",");
+
+    // Skip empty (just to be sure)
     if (!tok) {
       continue;
     }
-    
-    for (size_t i; i < IMAGE_SIZE; i++){
-      tok = strtok(NULL, ",");
-      if(!tok) {break;}
-      mnist_train_matrix->_data_at(count * n_cols + i) = (double) (atoi(tok));
+
+    // Extract the label which is saved as the first value
+    mnist_train_matrix->_data_at(count * n_cols + (IMAGE_SIZE)) = (double) (atof(tok));
+
+    // extract each comma seperated value from a single row
+    for (size_t i = 0; i < IMAGE_SIZE; i++){
+      tok = strtok(nullptr, ",");
+      if(!tok) break;
+      
+      mnist_train_matrix->_data_at(count * n_cols + i) = (double) (atof(tok));
     }
     count++;
   }
@@ -43,14 +52,4 @@ Matrix* read_mnist() {
 }
 
 
-int main() {
-  Matrix* test = read_mnist();
-
-  for(int j = 0; j < IMAGE_SIZE; j++) {
-    std::cout << test->at(0, j) << " ";
-  }
-
-  
-  return 0;
-}
 
