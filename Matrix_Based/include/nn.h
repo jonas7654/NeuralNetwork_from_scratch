@@ -21,13 +21,13 @@ private:
   bool use_one_hot;
 
 public:
-  nn(size_t number_of_layers, size_t layer_sizes[], size_t batch_size, bool use_one_hot);
+  nn(const size_t number_of_layers, const size_t layer_sizes[], const size_t batch_size, const bool use_one_hot);
   ~nn();
 
   Matrix* mse_loss(Matrix* y_pred, Matrix* y_true);
   Matrix* cce_loss(Matrix* y_pred, Matrix* y_true);
   void update(double& lr);
-  void train(Matrix* x, Matrix* y, int batch_size, double lr, double epochs, bool verbose);
+  void train(Matrix* x, Matrix* y, double lr, double epochs, bool verbose);
   void print() const;
 
   Matrix* forward(Matrix* input);

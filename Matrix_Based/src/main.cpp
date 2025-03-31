@@ -77,7 +77,7 @@ int main() {
   y->print();
 
   std::cout << "Starting Training" << std::endl;
-  neural_network.train(x, y, batch_size, 1, 50000, true);
+  neural_network.train(x, y, 1, 50000, true);
 
   neural_network.forward(x)->print();
   neural_network.predict(x);

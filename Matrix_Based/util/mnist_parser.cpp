@@ -1,4 +1,5 @@
 #include "../include/value_matrix.h"
+#include "../include/mnist_parser.h"
 #include <bits/types/FILE.h>
 #include <string.h>
 #include <string.h>
@@ -41,7 +42,7 @@ Matrix* read_mnist() {
       tok = strtok(nullptr, ",");
       if(!tok) break;
       
-      mnist_train_matrix->_data_at(count * n_cols + i) = (double) (atof(tok));
+      mnist_train_matrix->_data_at(count * n_cols + i) = (double) (atof(tok) / 255.0);
     }
     count++;
   }

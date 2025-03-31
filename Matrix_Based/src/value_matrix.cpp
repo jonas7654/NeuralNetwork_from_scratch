@@ -527,6 +527,47 @@ Matrix* Matrix::add_bias(Matrix* other) {
   return result;
 }
 
+void Matrix::batch_subset(size_t start_row, size_t batch_size) {
+  _data = _data + start_row * n_cols;
+  n_rows = batch_size;
+}
+
+Matrix* Matrix::select_row(size_t row) {
+  assert(row < n_rows);
+
+  Matrix* r = new Matrix(1, n_cols, false);
+  cblas_dcopy(n_cols, _data + row * n_cols, 1, r->_data, 1);
+  
+  return r;
+}
+
+Matrix* Matrix::select_col(size_t col) {
+  assert(col < n_cols);
+
+  Matrix* r = new Matrix(n_rows, 1, false);
+  //cblas_dcopy(n_rows, _data + col, n_cols, r->_data, 1);
+  for (int i = 0; i < n_rows; i ++) {
+    r->at(i, 0) = this->at(i, col);
+  } 
+  
+  return r;
+}
+
+void Matrix::tranpose() {
+  double* temp = new double[n];
+  cblas_dcopy(n, _data, 1, temp, 1);
+
+  for (size_t i = 0; i < n_rows; i++) {
+    for (size_t j = 0; j < n_cols; j++) {
+      _data[j * n_rows+ i] = temp[i * n_cols + j];
+    }  
+  }
+  delete[] temp;
+  size_t rows = n_rows;
+  this->n_rows = this->n_cols;
+  this->n_cols = rows;
+}
+
 void Matrix::topological_sort(std::vector<Matrix*> &topo_vector){
   // check if the current Node was already visited.
   // It would probably more efficient to store a bool _visited within Value :TODO

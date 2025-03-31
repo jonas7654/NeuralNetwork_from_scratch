@@ -20,19 +20,25 @@ friend class nn;
 
 private:
   double* _data;
-  bool isLearnable;
-  size_t n;
+  double* _gradient;
+
+  
   std::string op;
   std::unordered_set<Matrix*> childs;
   std::function<void()> _backward;
+
   void topological_sort(std::vector<Matrix*>& topo_vector);
   void collect_nodes(std::vector<Matrix*>& collected);
+  void batch_subset(size_t start_row, size_t end_row);
+
+  bool isLearnable;
   bool isPersistent;
   bool visited;
 public:
-  double* _gradient;
   size_t n_rows;
   size_t n_cols;
+  size_t n;
+
   Matrix(size_t n_rows, size_t n_cols, bool isLearnable);
   Matrix(Matrix* other);
   ~Matrix();
@@ -68,7 +74,10 @@ public:
   void scale(double& d);
   void gradDescent(double& lr);
   void setIsPersistent(bool b);
-
+  
+  Matrix* select_row(size_t row);
+  Matrix* select_col(size_t col);
+  void tranpose();
 };
 
 

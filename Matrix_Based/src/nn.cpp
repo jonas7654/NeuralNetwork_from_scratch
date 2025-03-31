@@ -1,6 +1,6 @@
 #include "../include/nn.h"
 
-nn::nn(size_t number_of_layers, size_t layer_sizes[], size_t  batch_size, bool use_one_hot) {
+nn::nn(const size_t number_of_layers, const size_t layer_sizes[], const size_t  batch_size, const bool use_one_hot) {
     num_layers = number_of_layers - 1; // Exclude input layer
     this->context_size = layer_sizes[0]; // store the context_size for better code readabillity
     this->output_size = layer_sizes[num_layers];
@@ -110,33 +110,53 @@ Matrix* nn::mse_loss(Matrix *y_pred, Matrix *y_true) {
   return loss;
 }
 
-void nn::train(Matrix *x, Matrix *y, int batch_size, double lr, double epochs, bool verbose) {
+void nn::train(Matrix *x, Matrix *y, double lr, double epochs, bool verbose) {
   Matrix* output;
   Matrix* cost;
+
+  size_t x_n_rows = x->n_rows;
+  size_t y_n_rows = y->n_rows;
+  double* x_data_start_ptr = x->_data;
+  double* y_data_start_ptr = y->_data;
+
   // Do not delete the input data in DeleteGraph
   x->isPersistent = true;
-  if (use_one_hot) {
-      y = one_hot(y);
-      this->use_one_hot = true;
-    }
   y->isPersistent = true;
-  for(size_t e = 0; e < epochs; e++) {
-    // Forward pass
-    output = forward(x); 
-    cost = mse_loss(output, y);
-    
-    // Backpropagation
-    cost->backward();
-    update(lr);
-    
 
+  for(size_t e = 0; e < epochs; e++) {
+    double verbose_cost = 0;
+    for (size_t batch = 0; batch < x_n_rows / batch_size; batch++) {
+      x->batch_subset(batch, batch_size);
+      y->batch_subset(batch, batch_size);
+      Matrix* y_one_hot = one_hot(y);
+    
+      // Forward pass
+      output = forward(x); 
+      cost = mse_loss(output, y_one_hot);
+      
+      // Backpropagation
+      cost->backward();
+      update(lr);
+      verbose_cost = cost->at(0, 0);
+      
+
+      cost->resetVisited();
+      cost->deleteGraph();
+
+      x->n_rows = x_n_rows;
+      x->_data = x_data_start_ptr;
+      y->n_rows = y_n_rows;
+      y->_data = y_data_start_ptr;
+    }
     if (verbose) {
-      std::cout << "Epoch " << e << ", Loss: " << cost->at(0, 0) << std::endl;
+      std::cout << "Epoch " << e << ", Loss: " << verbose_cost << std::endl;
     }
 
-    cost->resetVisited();
-    cost->deleteGraph();
+
   }
+
+  x->n_rows = x_n_rows;
+  y->n_rows = y_n_rows;
 
   x->isPersistent = false;
   y->isPersistent = false;
@@ -151,7 +171,11 @@ Matrix* nn::one_hot(Matrix* x) {
   Matrix* one_hot_matrix = new Matrix(batch_size, output_size, false);
   
   for (size_t i = 0; i < batch_size; i++) {
-    double non_zero_entry = static_cast<int>(x->at(i,0)); 
+    size_t non_zero_entry = static_cast<size_t>(x->at(i,0)); 
+    
+    //the entry must be within output bound
+    assert(non_zero_entry <= output_size);
+
     one_hot_matrix->at(i, non_zero_entry) = 1.0;
   }
 

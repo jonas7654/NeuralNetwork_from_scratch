@@ -7,11 +7,12 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "${file}",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}",
-                "${fileDirname}/value_matrix.cpp",
+                "${fileDirname}/../build/mnist",
+                "${fileDirname}/mnist.cpp",
                 "${fileDirname}/nn.cpp",
+                "${fileDirname}/value_matrix.cpp",
+                "${fileDirname}/../util/mnist_parser.cpp",  // ✅ Added mnist_parser.cpp
                 "-lopenblas"
             ],
             "options": {
