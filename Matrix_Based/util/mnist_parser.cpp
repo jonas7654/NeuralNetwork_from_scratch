@@ -1,16 +1,31 @@
-#include "../include/value_matrix.h"
 #include "../include/mnist_parser.h"
-#include <bits/types/FILE.h>
-#include <string.h>
-#include <string.h>
-#include <cstdio>
+#include <cstring>
+
 
 #define BUFFER_SIZE 10000 // How to set this properly
 #define IMAGE_SIZE 784
 #define N_IMAGES 60000
-#define FILE_PATH "../data/MNIST/mnist_train/mnist_train.csv"
 
-Matrix* read_mnist() {
+Matrix* read_mnist(const char* s) {
+  const char* FILE_PATH = nullptr;
+
+  if (strcmp(s, "train") == 0) {
+    FILE_PATH = "../data/MNIST/mnist_train/mnist_train.csv";
+  }
+  else if(strcmp(s, "test") == 0) {
+    FILE_PATH = "../data/MNIST/mnist_test/mnist_test.csv";
+  }
+  else {
+    std::cerr << "please specify train or test \n";
+    return nullptr;
+  }
+
+  if(FILE_PATH == nullptr) {
+    std::cerr << "FILE_PATH is nullptr \n";
+    return nullptr;
+  }
+
+
   FILE* file = fopen(FILE_PATH, "r");
   if(!file) {
     perror("error opening mnist");

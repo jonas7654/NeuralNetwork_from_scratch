@@ -533,24 +533,11 @@ void Matrix::batch_subset(size_t start_row, size_t batch_size) {
 }
 
 Matrix* Matrix::select_row(size_t row) {
-  assert(row < n_rows);
-
-  Matrix* r = new Matrix(1, n_cols, false);
-  cblas_dcopy(n_cols, _data + row * n_cols, 1, r->_data, 1);
-  
-  return r;
+  return slice(row , row, 0, n_cols - 1);
 }
 
 Matrix* Matrix::select_col(size_t col) {
-  assert(col < n_cols);
-
-  Matrix* r = new Matrix(n_rows, 1, false);
-  //cblas_dcopy(n_rows, _data + col, n_cols, r->_data, 1);
-  for (int i = 0; i < n_rows; i ++) {
-    r->at(i, 0) = this->at(i, col);
-  } 
-  
-  return r;
+  return slice(0, n_rows - 1, col, col);
 }
 
 Matrix* Matrix::slice(size_t row_start_idx, size_t row_end_idx, size_t col_start_idx, size_t col_end_idx) {

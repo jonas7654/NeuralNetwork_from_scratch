@@ -110,7 +110,7 @@ Matrix* nn::mse_loss(Matrix *y_pred, Matrix *y_true) {
   return loss;
 }
 
-void nn::train(Matrix *x, Matrix *y, double lr, double epochs, bool verbose) {
+void nn::train(Matrix *x, Matrix *y, double lr, double epochs, bool verbose, Matrix* test_data) {
   Matrix* output;
   Matrix* cost;
 
@@ -119,15 +119,21 @@ void nn::train(Matrix *x, Matrix *y, double lr, double epochs, bool verbose) {
   double* x_data_start_ptr = x->_data;
   double* y_data_start_ptr = y->_data;
 
+  // verbose helper
+  size_t total_processed_files;
+  float test_accuracy = 0;
+
   // Do not delete the input data in DeleteGraph
   x->isPersistent = true;
   y->isPersistent = true;
 
   for(size_t e = 0; e < epochs; e++) {
-    double verbose_cost = 0;
+    total_processed_files = 0;
     for (size_t batch = 0; batch < x_n_rows / batch_size; batch++) {
-      x->batch_subset(batch, batch_size);
+      double verbose_cost = 0;
+      
       y->batch_subset(batch, batch_size);
+      x->batch_subset(batch, batch_size);
       Matrix* y_one_hot = one_hot(y);
     
       // Forward pass
@@ -147,10 +153,19 @@ void nn::train(Matrix *x, Matrix *y, double lr, double epochs, bool verbose) {
       x->_data = x_data_start_ptr;
       y->n_rows = y_n_rows;
       y->_data = y_data_start_ptr;
+
+      if (verbose) {
+        total_processed_files += batch_size;
+
+        std::cout << "Train Epoch: " << e <<" [" << total_processed_files << "/" << x->n_rows << "] " <<
+          " Loss: " << verbose_cost << std::endl;
+      }
+
+      if (verbose) {
+
+      }
     }
-    if (verbose) {
-      std::cout << "Epoch " << e << ", Loss: " << verbose_cost << std::endl;
-    }
+   
 
 
   }
@@ -190,7 +205,7 @@ void nn::predict(Matrix *input) {
   Matrix* softmax_output = forward(input);
 
   #pragma omp parallel for
-  for (size_t row = 0; row < batch_size; row++) {
+  for (size_t row = 0; row < input->n_rows; row++) {
     double highest_prob = 0;
     for (size_t col = 0 ; col < output_size; col++) {
       if (softmax_output->_data[row * output_size + col] > highest_prob) {
@@ -201,7 +216,7 @@ void nn::predict(Matrix *input) {
   }
 
   // For now just print the predictions. Need to address this later.
-  for (size_t i = 0; i < batch_size; i++) {
+  for (size_t i = 0; i < input->n_rows; i++) {
     std::cout << predicted_index[i] << std::endl;
   }
 

@@ -27,7 +27,7 @@ public:
   Matrix* mse_loss(Matrix* y_pred, Matrix* y_true);
   Matrix* cce_loss(Matrix* y_pred, Matrix* y_true);
   void update(double& lr);
-  void train(Matrix* x, Matrix* y, double lr, double epochs, bool verbose);
+  void train(Matrix* x, Matrix* y, double lr, double epochs, bool verbose, Matrix* test_data);
   void print() const;
 
   Matrix* forward(Matrix* input);
