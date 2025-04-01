@@ -1,5 +1,6 @@
 #include "../include/nn.h"
 #include "../include/mnist_parser.h"
+#include <cstddef>
 #include <typeinfo>
 
 #define OUTPUT_SIZE 10
@@ -14,6 +15,21 @@
 
 int main() 
 {
+  Matrix* A = new Matrix(2,3,false);
+  for(size_t i = 0; i < A->n_rows; i++) {
+    for (size_t j = 0; j < A->n_cols; j++) {
+      A->at(i, j) = i + j + 1;
+    }
+  }
+
+  A->print();
+
+  Matrix* slice = A->slice(0, 1, 0, 2);
+  slice->print();
+
+
+  return 0;
+
   // config
   constexpr size_t number_of_layers = 3;
   constexpr size_t layer_config[number_of_layers] = {IMAGE_SIZE, 16, OUTPUT_SIZE};
@@ -33,11 +49,7 @@ int main()
   mnist_data->n_cols = 784; // THIS IS JUST A HACK RIGHT NOW! : TODO
   
 
-  // Create tiny test dataset
-  Matrix* test_input = new Matrix(2, 784, false);
-  Matrix* test_labels = new Matrix(2, 10, false);
-  mlp.train(test_input, test_labels, lr, epochs, verbose);
-  mlp.predict(test_input);
+
   
   return 0;
 }

@@ -78,6 +78,7 @@ public:
   Matrix* select_row(size_t row);
   Matrix* select_col(size_t col);
   void tranpose();
+  Matrix* slice(size_t row_start_idx, size_t row_end_idx, size_t col_start_idx, size_t col_end_idx);   
 };
 
 

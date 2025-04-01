@@ -553,6 +553,22 @@ Matrix* Matrix::select_col(size_t col) {
   return r;
 }
 
+Matrix* Matrix::slice(size_t row_start_idx, size_t row_end_idx, size_t col_start_idx, size_t col_end_idx) {
+  assert(row_start_idx < n_rows && row_end_idx < n_rows && row_start_idx <= row_end_idx);
+  assert(col_start_idx < n_cols && col_end_idx < n_cols && col_start_idx <= col_end_idx);
+  size_t new_n_rows = row_end_idx - row_start_idx + 1;
+  size_t new_n_cols = col_end_idx - col_start_idx + 1;
+
+  Matrix* sliced_matrix = new Matrix(new_n_rows, new_n_cols, false);
+
+  // Copy sliced data row-wise
+  for (size_t i = 0; i < new_n_rows; i++) {
+    cblas_dcopy(new_n_cols, this->_data + (row_start_idx + i) * n_cols + col_start_idx, 1 , sliced_matrix->_data + i * new_n_cols, 1);
+  }
+  
+  return sliced_matrix;
+}
+
 void Matrix::tranpose() {
   double* temp = new double[n];
   cblas_dcopy(n, _data, 1, temp, 1);
