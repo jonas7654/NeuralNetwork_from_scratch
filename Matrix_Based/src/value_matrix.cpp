@@ -436,7 +436,6 @@ result->_backward = [this, other, result]() {
                       other->_data[j * other->n_cols + n];          // W[j][n]
           }
           
-          // Accumulate gradient (important for backprop through computational graph)
           this->_gradient[i * this->n_cols + j] += grad;
       }
   }
