@@ -6,11 +6,11 @@
 #define OUTPUT_SIZE 10
 #define IMAGE_SIZE 784
 
-// :TODO add a slice method to the matrix class
 // implement: Xavier/Glorot initialization
 // Pixel normaliziation within parser?
 // Look at batch extraction methods which overwrites pointer to the internal array (Might be a very dirty solution)
-//
+// Handle partial batches
+// impement cross_entropy
 
 int main() 
 {
@@ -19,8 +19,8 @@ int main()
   constexpr size_t layer_config[number_of_layers] = {IMAGE_SIZE, 16, 16, OUTPUT_SIZE};
   const size_t batch_size = 32;
   constexpr bool use_one_hot = true;
-  double lr = 0.0001;
-  double epochs = 10;
+  double lr = 0.1;
+  double epochs = 15;
   bool verbose = true;
 
 
@@ -78,17 +78,5 @@ int main()
   
   std::cout << "Test Accuracy: " << test_accuracy << std::endl;
 
-  
-  Matrix* f = mlp.forward(x_data_test->slice(50, 60, 0, IMAGE_SIZE - 1));
-  for (size_t i = 0; i < 11; i++) {
-    double highest_prob = 0;
-    for (size_t j = 0; j < output_size; j++) {
-      if (f->at(i, j) > highest_prob) {
-        highest_prob = full_pred->at(i, j);
-        predicted_index[i] = j;
-      }
-    }
-    std::cout << "Pred: " << predicted_index[i] << " vs. " << true_lables_test->slice(50, 60, 0, 0)->at(i, 0) << std::endl;
-  }
   return 0;
 }

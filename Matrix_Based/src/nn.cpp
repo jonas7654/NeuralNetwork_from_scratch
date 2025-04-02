@@ -1,5 +1,4 @@
 #include "../include/nn.h"
-#include <cblas.h>
 
 nn::nn(const size_t number_of_layers, const size_t layer_sizes[], const size_t  batch_size, const bool use_one_hot) {
     num_layers = number_of_layers - 1; // Exclude input layer
@@ -118,7 +117,8 @@ void nn::train(Matrix *x, Matrix *y, double lr = 0.001, size_t epochs = 5, bool 
 
   size_t x_n_rows = x->n_rows;
   size_t y_n_rows = y->n_rows;
-
+  
+  
   // Save the x and y datas start ptr value in order to reset them later 
   // I modify the ptr during batching to avoid memory copying. 
   double* x_data_start_ptr = x->_data;
@@ -130,7 +130,8 @@ void nn::train(Matrix *x, Matrix *y, double lr = 0.001, size_t epochs = 5, bool 
   size_t total_samples = y->n_rows;
   float test_accuracy;
   
-
+  // Check if total_samples is divisible by batch_size
+  bool has_partial_batch =  total_samples % batch_size == 0;
 
   // Do not delete the input data in DeleteGraph
   x->isPersistent = true;
@@ -140,7 +141,7 @@ void nn::train(Matrix *x, Matrix *y, double lr = 0.001, size_t epochs = 5, bool 
     total_processed_files = 0;
     epoch_loss = 0.0;
     for (size_t batch = 0; batch < x_n_rows; batch += batch_size) {
-      
+
       y->batch_subset(batch, batch_size);
       x->batch_subset(batch, batch_size);
       Matrix* y_one_hot = one_hot(y);
@@ -182,7 +183,6 @@ void nn::train(Matrix *x, Matrix *y, double lr = 0.001, size_t epochs = 5, bool 
   x->isPersistent = false;
   y->isPersistent = false;
 }
-
 
 Matrix* nn::one_hot(Matrix* x) {
   // I assume that data has dimensions B, 1 for categorical data.

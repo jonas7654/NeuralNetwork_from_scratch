@@ -1,4 +1,5 @@
 #include "../include/mnist_parser.h"
+#include <bits/types/FILE.h>
 #include <cstring>
 
 
@@ -10,11 +11,11 @@ Matrix* read_mnist(const char* s) {
   size_t n_images;
 
   if (strcmp(s, "train") == 0) {
-    FILE_PATH = "../data/MNIST/mnist_train/mnist_train.csv";
+    FILE_PATH = "/home/jv/GitHub/NeuralNetwork_from_scratch/data/MNIST/mnist_train/mnist_train.csv";
     n_images = 60000;
   }
   else if(strcmp(s, "test") == 0) {
-    FILE_PATH = "../data/MNIST/mnist_test/mnist_test.csv";
+    FILE_PATH = "/home/jv/GitHub/NeuralNetwork_from_scratch/data/MNIST/mnist_test/mnist_test.csv";
     n_images = 10000;
   }
   else {
