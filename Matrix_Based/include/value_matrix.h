@@ -71,6 +71,8 @@ public:
   Matrix* softmax();
   Matrix* add_bias(Matrix* other);
   Matrix* square();
+  Matrix* log();
+
   void scale(double& d);
   void gradDescent(double& lr);
   void setIsPersistent(bool b);

@@ -1,4 +1,5 @@
 #include "../include/nn.h"
+#include <cblas.h>
 
 nn::nn(const size_t number_of_layers, const size_t layer_sizes[], const size_t  batch_size, const bool use_one_hot) {
     num_layers = number_of_layers - 1; // Exclude input layer
@@ -7,8 +8,7 @@ nn::nn(const size_t number_of_layers, const size_t layer_sizes[], const size_t  
     this->batch_size = batch_size;
     this->use_one_hot = use_one_hot;
 
-    this->layer_weights = new Matrix*[num_layers]; 
-    this->layer_biases = new Matrix*[num_layers];
+    this->layer_weights = new Matrix*[num_layers]; this->layer_biases = new Matrix*[num_layers];
     for (size_t i = 1; i < number_of_layers ; i++) {
       // Allocate weights 
       Matrix* weights = new Matrix(layer_sizes[i - 1], layer_sizes[i], true);
@@ -76,9 +76,9 @@ void nn::update(double& lr) {
 
     layer_weights[i]->gradDescent(lr);
     layer_biases[i]->gradDescent(lr);
-
+    // Reset gradients
     layer_biases[i]->zeroGrad();
-    layer_weights[i]->zeroGrad(); // Reset gradients
+    layer_weights[i]->zeroGrad(); 
   }
 }
 
@@ -110,18 +110,27 @@ Matrix* nn::mse_loss(Matrix *y_pred, Matrix *y_true) {
   return loss;
 }
 
-void nn::train(Matrix *x, Matrix *y, double lr, double epochs, bool verbose, Matrix* test_data) {
+void nn::train(Matrix *x, Matrix *y, double lr = 0.001, size_t epochs = 5, bool verbose = false, Matrix* test_x = nullptr, Matrix* test_y = nullptr) {
+  assert(x->n_rows == y->n_rows);
+    
   Matrix* output;
-  Matrix* cost;
+  Matrix* loss;
 
   size_t x_n_rows = x->n_rows;
   size_t y_n_rows = y->n_rows;
+
+  // Save the x and y datas start ptr value in order to reset them later 
+  // I modify the ptr during batching to avoid memory copying. 
   double* x_data_start_ptr = x->_data;
   double* y_data_start_ptr = y->_data;
 
   // verbose helper
+  float epoch_loss;
   size_t total_processed_files;
-  float test_accuracy = 0;
+  size_t total_samples = y->n_rows;
+  float test_accuracy;
+  
+
 
   // Do not delete the input data in DeleteGraph
   x->isPersistent = true;
@@ -129,8 +138,8 @@ void nn::train(Matrix *x, Matrix *y, double lr, double epochs, bool verbose, Mat
 
   for(size_t e = 0; e < epochs; e++) {
     total_processed_files = 0;
-    for (size_t batch = 0; batch < x_n_rows / batch_size; batch++) {
-      double verbose_cost = 0;
+    epoch_loss = 0.0;
+    for (size_t batch = 0; batch < x_n_rows; batch += batch_size) {
       
       y->batch_subset(batch, batch_size);
       x->batch_subset(batch, batch_size);
@@ -138,16 +147,16 @@ void nn::train(Matrix *x, Matrix *y, double lr, double epochs, bool verbose, Mat
     
       // Forward pass
       output = forward(x); 
-      cost = mse_loss(output, y_one_hot);
-      
+      loss = mse_loss(output, y_one_hot);
+
       // Backpropagation
-      cost->backward();
+      loss->backward();
       update(lr);
-      verbose_cost = cost->at(0, 0);
+      epoch_loss += loss->at(0, 0);
       
 
-      cost->resetVisited();
-      cost->deleteGraph();
+      loss->resetVisited();
+      loss->deleteGraph();
 
       x->n_rows = x_n_rows;
       x->_data = x_data_start_ptr;
@@ -158,16 +167,13 @@ void nn::train(Matrix *x, Matrix *y, double lr, double epochs, bool verbose, Mat
         total_processed_files += batch_size;
 
         std::cout << "Train Epoch: " << e <<" [" << total_processed_files << "/" << x->n_rows << "] " <<
-          " Loss: " << verbose_cost << std::endl;
-      }
-
-      if (verbose) {
-
+          " Loss: " << epoch_loss / (batch + batch_size)<< std::endl;
       }
     }
-   
-
-
+    double avg_loss = epoch_loss / total_samples;
+    if (verbose) {
+      std::cout << "Train loss: " << avg_loss << std::endl;
+    } 
   }
 
   x->n_rows = x_n_rows;
@@ -176,6 +182,7 @@ void nn::train(Matrix *x, Matrix *y, double lr, double epochs, bool verbose, Mat
   x->isPersistent = false;
   y->isPersistent = false;
 }
+
 
 Matrix* nn::one_hot(Matrix* x) {
   // I assume that data has dimensions B, 1 for categorical data.
@@ -188,8 +195,8 @@ Matrix* nn::one_hot(Matrix* x) {
   for (size_t i = 0; i < batch_size; i++) {
     size_t non_zero_entry = static_cast<size_t>(x->at(i,0)); 
     
-    //the entry must be within output bound
-    assert(non_zero_entry <= output_size);
+    // the entry must be within output bound
+    assert(non_zero_entry < output_size);
 
     one_hot_matrix->at(i, non_zero_entry) = 1.0;
   }
@@ -221,5 +228,41 @@ void nn::predict(Matrix *input) {
   }
 
   delete[] predicted_index;
+  // TODO: this probably deletes input
   softmax_output->deleteGraph();
 }
+
+
+// Compute the cross entropy loss between the logits and the targets
+// y_pred must be the logits (no softmax)
+Matrix* nn::cross_entropy_loss(Matrix* y_pred, Matrix* y_true) {
+  double* y_pred_data = y_pred->_data;
+  double* y_true_data = y_true->_data;
+
+  Matrix* loss = new Matrix(1,1,false);
+  
+  // For each row
+  // TODO: This can be optimized
+  double ce_loss = 0;
+  for (size_t i = 0; i < batch_size; i++) {
+    for (size_t j = 0; j < output_size; j++) {
+      ce_loss += std::log(y_pred_data[i * output_size + j] + 1e-10) * y_true_data[i * output_size + j];
+    }
+  }
+  ce_loss *= -(1.0/batch_size);
+
+  loss->fill(ce_loss);
+  loss->childs.insert(y_pred);
+  loss->op = "cross_entropy_loss";
+  
+  loss->_backward = [y_pred, y_true, loss] () {
+    for (size_t i = 0; i < y_pred->n_rows; i++) {
+      for (size_t j = 0; j < y_pred->n_cols; j++) {
+        y_pred->_gradient[i * y_true->n_cols + j] += y_true->_data_at(i * y_true->n_cols + j) / y_pred->_data_at(i * y_true->n_cols + j);
+      }
+    }
+  };
+
+  return loss;
+}
+

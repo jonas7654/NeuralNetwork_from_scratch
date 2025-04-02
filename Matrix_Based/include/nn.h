@@ -20,20 +20,21 @@ private:
   size_t batch_size;
   bool use_one_hot;
 
+
 public:
   nn(const size_t number_of_layers, const size_t layer_sizes[], const size_t batch_size, const bool use_one_hot);
   ~nn();
 
   Matrix* mse_loss(Matrix* y_pred, Matrix* y_true);
-  Matrix* cce_loss(Matrix* y_pred, Matrix* y_true);
+  Matrix* cross_entropy_loss(Matrix* y_pred, Matrix* y_true);
   void update(double& lr);
-  void train(Matrix* x, Matrix* y, double lr, double epochs, bool verbose, Matrix* test_data);
+  void train(Matrix* x, Matrix* y, double lr, size_t epochs, bool verbose, Matrix* test_x, Matrix* test_y);
   void print() const;
 
   Matrix* forward(Matrix* input);
   void predict(Matrix* input);
-
   
+  float calculate_test_accuracy(Matrix* x_test, Matrix* y_test);
   Matrix* one_hot(Matrix* x);
 };
 

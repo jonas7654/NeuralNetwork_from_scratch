@@ -208,7 +208,7 @@ void Matrix::printGradient() {
 }
 
 void Matrix::scale(double& d) {
-   cblas_dscal(n_rows * n_cols, d, _data, 1);
+   cblas_dscal(n, d, _data, 1);
 }
 
 void Matrix::gradDescent(double &lr) {
@@ -219,10 +219,6 @@ void Matrix::gradDescent(double &lr) {
               1,
               this->_data,
               1);
-
-//  for (size_t i = 0; i < n; i++){
-//    this->_data[i] -= lr * this->_gradient[i];
-//  }
 }
 
 Matrix* Matrix::relu() {
@@ -349,17 +345,6 @@ Matrix* Matrix::operator- (Matrix* other){
   result->childs.insert(this);
   result->childs.insert(other);
   result->op = "-";
-
-// result->_backward = [this, other, result]() {
-//        // Gradient for this: += result's gradient
-//        for (size_t i = 0; i < this->n; i++) {
-//            this->_gradient[i] += result->_gradient[i];
-//        }
-//        // Gradient for other: -= result's gradient
-//        for (size_t i = 0; i < other->n; i++) {
-//            other->_gradient[i] -= result->_gradient[i];
-//        }
-//    };
 
   result->_backward = [this, other, result] () {
     // Note: Addtition and Subtraction just pass the gradient to the childs
@@ -511,7 +496,6 @@ Matrix* Matrix::add_bias(Matrix* other) {
   result->_backward = [this, other, result] () {
     cblas_daxpy(n, 1.0, result->_gradient, 1, this->_gradient, 1);
     
-    // Gradient for bias vector (fixed)
     const size_t cols = result->n_cols;
     for (size_t col = 0; col < cols; ++col) {
         double bias_grad = 0.0;
@@ -526,7 +510,35 @@ Matrix* Matrix::add_bias(Matrix* other) {
   return result;
 }
 
+// Creates a log transformed new Matrix with "this" as child 
+Matrix* Matrix::log() {
+  Matrix* result = new Matrix(n_rows, n_cols, isPersistent);
+  cblas_dcopy(n, _data, 1, result->_data, 1);
+  
+  // Apply log
+  for (size_t i = 0; i < n ;i++) {
+    result->_data[i] = std::log(result->_data[i]);
+  }
+
+  result->childs.insert(this);
+  result->op = "log";
+  
+  // Apply gradient elementwise
+  result->_backward = [this, result] () {
+    // this_grad = result_grad + this_grad;
+    cblas_daxpy(n, 1.0, result->_gradient, 1, this->_gradient, 1);
+
+    for (size_t i = 0; i < n; i++) {
+          this->_gradient[i] *= 1 / result->_data[i];
+    }
+  };
+
+  return result;
+}
+
 void Matrix::batch_subset(size_t start_row, size_t batch_size) {
+  // Function only for the training Function
+  // Allows subsetting batches using pointer arithmetic to work inplace
   _data = _data + start_row * n_cols;
   n_rows = batch_size;
 }
