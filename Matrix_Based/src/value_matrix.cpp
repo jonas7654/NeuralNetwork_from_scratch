@@ -4,9 +4,10 @@
 #include <cblas.h> 
 #include <cmath>
 
-Matrix::Matrix(size_t rows, size_t cols, bool isLearnable)
-        : n_rows(rows), n_cols(cols), isLearnable(isLearnable),
-          isPersistent(false) {// Initialize as non-persistent by default 
+Matrix::Matrix(size_t rows, size_t cols, bool isLearnable) { 
+  this->n_rows = rows;
+  this->n_cols = cols;
+  this->isPersistent = false;
   double* _array = new double[n_rows * n_cols];
   double* _grad = new double[n_rows * n_cols];
   this->_data = _array;
@@ -20,16 +21,14 @@ Matrix::Matrix(size_t rows, size_t cols, bool isLearnable)
   this->childs = childs;
 
   // fill _gradient with zeros
-  for (size_t i = 0; i < this->n; i++) {
-    _gradient[i] = 0.0;
-  }
+  cblas_dscal(this->n, 0.0, _gradient, 1);
   
   // Randomly initialize the matrix
   if (isLearnable) {
     rand();
   }
   else {
-    fill(0.0);
+    cblas_dscal(this->n, 0.0, _data, 1);
   }
 
 };
@@ -408,42 +407,61 @@ result->_backward = [this, other, result]() {
   // - dL/dZ (result->_gradient): m x n
   // - dL/dX (this->_gradient): m x k
   
-  // Loop over X's gradient dimensions
-  for (int i = 0; i < this->n_rows; ++i) {         // m rows
-      for (int j = 0; j < this->n_cols; ++j) {     // k columns
-          double grad = 0.0;
-          
-          // Compute dot product between:
-          // - i-th row of dL/dZ (m x n)
-          // - j-th row of W (k x n)
-          for (int n = 0; n < result->n_cols; ++n) {  // n columns
-              grad += result->_gradient[i * result->n_cols + n] *  // dZ[i][n]
-                      other->_data[j * other->n_cols + n];          // W[j][n]
-          }
-          
-          this->_gradient[i * this->n_cols + j] += grad;
-      }
-  }
+//  // Loop over X's gradient dimensions
+//  for (int i = 0; i < this->n_rows; ++i) {         // m rows
+//      for (int j = 0; j < this->n_cols; ++j) {     // k columns
+//          double grad = 0.0;
+//          
+//          // Compute dot product between:
+//          // - i-th row of dL/dZ (m x n)
+//          // - j-th row of W (k x n)
+//          for (int n = 0; n < result->n_cols; ++n) {  // n columns
+//              grad += result->_gradient[i * result->n_cols + n] *  // dZ[i][n]
+//                      other->_data[j * other->n_cols + n];          // W[j][n]
+//          }
+//          
+//          this->_gradient[i * this->n_cols + j] += grad;
+//      }
+//  }
+//
+//  // Gradient for 'other' (W): dL/dW = X^T * dL/dZ
+//  // Dimensions:
+//  // - dL/dW (other->_gradient): k x n
+//  
+//  for (int j = 0; j < other->n_rows; ++j) {       // k rows
+//      for (int l = 0; l < other->n_cols; ++l) {    // n columns
+//          double grad = 0.0;
+//          
+//          // Compute dot product between:
+//          // - j-th column of X (m x k)
+//          // - l-th column of dL/dZ (m x n)
+//          for (int i = 0; i < this->n_rows; ++i) {  // m rows
+//              grad += this->_data[i * this->n_cols + j] *   // X[i][j]
+//                      result->_gradient[i * result->n_cols + l];  // dZ[i][l]
+//          }
+//          
+//          other->_gradient[j * other->n_cols + l] += grad;
+//      }
+//  }
 
-  // Gradient for 'other' (W): dL/dW = X^T * dL/dZ
-  // Dimensions:
-  // - dL/dW (other->_gradient): k x n
+
+  // For gradient w.r.t this (X): dL/dX = dL/dZ * W^T
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+              this->n_rows, this->n_cols, result->n_cols,
+              1.0,
+              result->_gradient, result->n_cols,
+              other->_data, other->n_cols,
+              1.0,
+              this->_gradient, this->n_cols);
   
-  for (int j = 0; j < other->n_rows; ++j) {       // k rows
-      for (int l = 0; l < other->n_cols; ++l) {    // n columns
-          double grad = 0.0;
-          
-          // Compute dot product between:
-          // - j-th column of X (m x k)
-          // - l-th column of dL/dZ (m x n)
-          for (int i = 0; i < this->n_rows; ++i) {  // m rows
-              grad += this->_data[i * this->n_cols + j] *   // X[i][j]
-                      result->_gradient[i * result->n_cols + l];  // dZ[i][l]
-          }
-          
-          other->_gradient[j * other->n_cols + l] += grad;
-      }
-  }
+  // For gradient w.r.t other (W): dL/dW = X^T * dL/dZ
+  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+              other->n_rows, other->n_cols, this->n_rows,
+              1.0,
+              this->_data, this->n_cols,
+              result->_gradient, result->n_cols,
+              1.0,
+              other->_gradient, other->n_cols);
 };
 
   return result;
@@ -495,6 +513,8 @@ Matrix* Matrix::add_bias(Matrix* other) {
     
   result->_backward = [this, other, result] () {
     cblas_daxpy(n, 1.0, result->_gradient, 1, this->_gradient, 1);
+
+
     
     const size_t cols = result->n_cols;
     for (size_t col = 0; col < cols; ++col) {

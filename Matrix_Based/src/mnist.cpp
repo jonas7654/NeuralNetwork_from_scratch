@@ -2,6 +2,7 @@
 #include "../include/mnist_parser.h"
 #include <cstddef>
 #include <typeinfo>
+#include <chrono>
 
 #define OUTPUT_SIZE 10
 #define IMAGE_SIZE 784
@@ -16,10 +17,10 @@ int main()
 {
   // config
   constexpr size_t number_of_layers = 4;
-  constexpr size_t layer_config[number_of_layers] = {IMAGE_SIZE, 16, 16, OUTPUT_SIZE};
-  const size_t batch_size = 32;
+  constexpr size_t layer_config[number_of_layers] = {IMAGE_SIZE, 16, 32, OUTPUT_SIZE};
+  const size_t batch_size = 1000;
   constexpr bool use_one_hot = true;
-  double lr = 0.1;
+  double lr = 0.0001;
   double epochs = 15;
   bool verbose = true;
 
@@ -46,10 +47,14 @@ int main()
   // Clean up
   delete mnist_data;
   delete mnist_data_test;
-
+ 
   // ***** Train the Model ***** //
+  auto start = std::chrono::high_resolution_clock::now();
   mlp.train(x_data, true_lables, lr, epochs, verbose, x_data_test, true_lables_test);
-  
+  auto end = std::chrono::high_resolution_clock::now();
+  // Calculate duration in microseconds
+  auto duration = std::chrono::duration<double>(end - start);
+  std::cout << "Execution time: " << duration.count() << " seconds" << std::endl;
 
   // ***** Calculate test accuracy for the test data ***** //
   Matrix* full_pred = mlp.forward(x_data_test)->softmax();

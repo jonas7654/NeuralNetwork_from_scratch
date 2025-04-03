@@ -65,7 +65,7 @@ Matrix* read_mnist(const char* s) {
     count++;
   }
 
-  std::cout << "Read " << count << "images from" << s << " dataset" << std::endl;
+  std::cout << "Read " << count << " images from " << s << " dataset" << std::endl;
 
   fclose(file);
 
