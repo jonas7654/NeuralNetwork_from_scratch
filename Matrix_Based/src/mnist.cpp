@@ -21,8 +21,8 @@ int main()
   const size_t batch_size = 1000;
   constexpr bool use_one_hot = true;
   double lr = 0.0001;
-  double epochs = 15;
-  bool verbose = true;
+  double epochs = 40;
+  bool verbose = false;
 
 
   // Initialize Neural Network
