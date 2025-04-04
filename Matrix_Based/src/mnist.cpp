@@ -17,11 +17,11 @@ int main()
 {
   // config
   constexpr size_t number_of_layers = 4;
-  constexpr size_t layer_config[number_of_layers] = {IMAGE_SIZE, 16, 32, OUTPUT_SIZE};
+  constexpr size_t layer_config[number_of_layers] = {IMAGE_SIZE, 16, 16, OUTPUT_SIZE};
   const size_t batch_size = 1000;
   constexpr bool use_one_hot = true;
   double lr = 0.0001;
-  double epochs = 15;
+  double epochs = 40;
   bool verbose = true;
 
 

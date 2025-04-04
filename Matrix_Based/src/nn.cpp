@@ -56,14 +56,14 @@ Matrix* nn::forward(Matrix* input) {
     input = input->add_bias(layer_biases[i]);
 
     if (i < num_layers - 1) {
-      input = input->sigmoid();
+      input = input->relu();
     } 
     else {
       if (use_one_hot) {
         input = input->softmax();
       }
       else {
-        input = input->sigmoid();
+        input = input->relu();
       }
     }
   }
@@ -246,7 +246,7 @@ Matrix* nn::cross_entropy_loss(Matrix* y_pred, Matrix* y_true) {
   double ce_loss = 0;
   for (size_t i = 0; i < batch_size; i++) {
     for (size_t j = 0; j < output_size; j++) {
-      ce_loss += std::log(y_pred_data[i * output_size + j] + 1e-10) * y_true_data[i * output_size + j];
+      ce_loss += std::log(std::max(y_pred_data[i * output_size + j],1e-6)) * y_true_data[i * output_size + j];
     }
   }
   ce_loss *= -(1.0/batch_size);
