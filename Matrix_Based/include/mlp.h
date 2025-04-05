@@ -9,7 +9,7 @@
 #include <omp.h>
 
 
-class nn {
+class mlp {
 private:
   // Array of Matrices where the indice correspond to the layer
   Matrix** layer_weights;
@@ -22,8 +22,8 @@ private:
 
 
 public:
-  nn(const size_t number_of_layers, const size_t layer_sizes[], const size_t batch_size, const bool use_one_hot);
-  ~nn();
+  mlp(const size_t number_of_layers, const size_t layer_sizes[], const size_t batch_size, const bool use_one_hot);
+  ~mlp();
 
   Matrix* mse_loss(Matrix* y_pred, Matrix* y_true);
   Matrix* cross_entropy_loss(Matrix* y_pred, Matrix* y_true);

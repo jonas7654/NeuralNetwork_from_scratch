@@ -16,7 +16,7 @@
 
 class Matrix {
 typedef std::mt19937 rng_type;
-friend class nn;
+friend class mlp;
 
 private:
   double* _data;

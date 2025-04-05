@@ -1,6 +1,6 @@
-#include "../include/nn.h"
+#include "../include/mlp.h"
 
-nn::nn(const size_t number_of_layers, const size_t layer_sizes[], const size_t  batch_size, const bool use_one_hot) {
+mlp::mlp(const size_t number_of_layers, const size_t layer_sizes[], const size_t  batch_size, const bool use_one_hot) {
     num_layers = number_of_layers - 1; // Exclude input layer
     this->context_size = layer_sizes[0]; // store the context_size for better code readabillity
     this->output_size = layer_sizes[num_layers];
@@ -18,7 +18,7 @@ nn::nn(const size_t number_of_layers, const size_t layer_sizes[], const size_t  
     }
 }
 
-nn::~nn() {
+mlp::~mlp() {
   for (size_t i = 0; i < num_layers; i++) {
     delete layer_weights[i];
     delete layer_biases[i];
@@ -28,7 +28,7 @@ nn::~nn() {
 }
 
 
-void nn::print() const {
+void mlp::print() const {
     for (size_t i = 0; i < num_layers; i++) {
         if (i == num_layers - 1) {
           std::cout << "Output layer: \n";
@@ -48,7 +48,7 @@ void nn::print() const {
     }
     std::cout << std::endl;
 } 
-Matrix* nn::forward(Matrix* input) {
+Matrix* mlp::forward(Matrix* input) {
   assert(input->n_cols == layer_weights[0]->n_rows);
 
   for(size_t i = 0; i < num_layers; i++) {
@@ -70,7 +70,7 @@ Matrix* nn::forward(Matrix* input) {
   return input;
 }
 
-void nn::update(double& lr) {
+void mlp::update(double& lr) {
   for (int i = num_layers - 1; i >= 0; i--) {
 
     layer_weights[i]->gradDescent(lr);
@@ -81,7 +81,7 @@ void nn::update(double& lr) {
   }
 }
 
-Matrix* nn::mse_loss(Matrix *y_pred, Matrix *y_true) {
+Matrix* mlp::mse_loss(Matrix *y_pred, Matrix *y_true) {
   if (use_one_hot) {
     assert(y_true->n_cols == output_size);
     assert(y_true->n_rows == batch_size);
@@ -109,7 +109,7 @@ Matrix* nn::mse_loss(Matrix *y_pred, Matrix *y_true) {
   return loss;
 }
 
-void nn::train(Matrix *x, Matrix *y, double lr = 0.001, size_t epochs = 5, bool verbose = false, Matrix* test_x = nullptr, Matrix* test_y = nullptr) {
+void mlp::train(Matrix *x, Matrix *y, double lr = 0.001, size_t epochs = 5, bool verbose = false, Matrix* test_x = nullptr, Matrix* test_y = nullptr) {
   assert(x->n_rows == y->n_rows);
     
   Matrix* output;
@@ -184,7 +184,7 @@ void nn::train(Matrix *x, Matrix *y, double lr = 0.001, size_t epochs = 5, bool 
   y->isPersistent = false;
 }
 
-Matrix* nn::one_hot(Matrix* x) {
+Matrix* mlp::one_hot(Matrix* x) {
   // I assume that data has dimensions B, 1 for categorical data.
   // => for each batch there is one right indice over the output_size
   assert(x->n_cols == 1);
@@ -205,7 +205,7 @@ Matrix* nn::one_hot(Matrix* x) {
 }
 
 
-void nn::predict(Matrix *input) {
+void mlp::predict(Matrix *input) {
   assert(input->n_cols == layer_weights[0]->n_rows);
   size_t* predicted_index = new size_t[batch_size];
 
@@ -235,7 +235,7 @@ void nn::predict(Matrix *input) {
 
 // Compute the cross entropy loss between the logits and the targets
 // y_pred must be the logits (no softmax)
-Matrix* nn::cross_entropy_loss(Matrix* y_pred, Matrix* y_true) {
+Matrix* mlp::cross_entropy_loss(Matrix* y_pred, Matrix* y_true) {
   double* y_pred_data = y_pred->_data;
   double* y_true_data = y_true->_data;
 
