@@ -11,6 +11,7 @@ Embedding::Embedding(size_t& vocab_size, size_t& n_embd, size_t& batch_size, siz
 Matrix* Embedding::forward(Matrix *x) {
   // Input has shape (B, context_size)
   // Input consists of Tokens
+  // Output has shape B, context_size, n_embd
   
   // Update the current Embedding Matrix 
   Matrix* temp = this->embedding_matrix;
@@ -23,7 +24,8 @@ Matrix* Embedding::forward(Matrix *x) {
   Matrix* selected_embeddings = new Matrix(context_size, n_embd, false);
   for (size_t batch = 0; batch < batch_size ; batch++) {
     for (size_t i = 0; i < context_size; i++) {
-      selected_embeddings->_data[batch * context_size + i]  = embedding_matrix->_data[]
+      size_t token = (size_t) x->_data[batch * context_size + i];
+      selected_embeddings->_data[batch * context_size + token]  = embedding_matrix->_data[batch * context_size * i];
     }
   }
 
