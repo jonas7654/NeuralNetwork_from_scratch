@@ -13,10 +13,12 @@
 #include <random>
 #include <stack>
 
+class Embedding;
 
 class Matrix {
 typedef std::mt19937 rng_type;
 friend class mlp;
+friend class Embedding;
 
 private:
   double* _data;
