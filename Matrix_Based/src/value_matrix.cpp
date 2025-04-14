@@ -88,7 +88,6 @@ double& Matrix::_data_at(size_t i) {
 
 Matrix* Matrix::softmax() {
   // Apply the softmax row-wise: S = e^x / sum(e^x)
-  // TODO: numerical stability
   Matrix* result = new Matrix(this->n_rows, this->n_cols, false);
   
    for (size_t i = 0; i < n_rows; i++) {
@@ -604,7 +603,6 @@ void Matrix::tranpose() {
 
 void Matrix::topological_sort(std::vector<Matrix*> &topo_vector){
   // check if the current Node was already visited.
-  // It would probably more efficient to store a bool _visited within Value :TODO
   if (this->visited) {
     return;
   }
