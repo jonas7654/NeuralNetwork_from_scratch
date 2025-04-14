@@ -1,8 +1,8 @@
 # mlp.cpp
 
-This repository hosts a multilayer perceptron (MLP) implementation in C++.
-I created this project for my own educational purposes only.
-Matrix Based uses openBLAS to optimize Matrix operations to speed up computation.
+-This repository hosts a multilayer perceptron (MLP) implementation in C++.
+-I created this project for my own educational purposes only.
+-Matrix Based uses openBLAS to optimize Matrix operations to speed up computation.
 
 # Value Based and Matrix Based computational Graph
 ## Value Based
