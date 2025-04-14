@@ -5,6 +5,7 @@
 - Matrix Based uses openBLAS to optimize Matrix operations to speed up computation.
 - Backpropagation is done by creating a Computational Graph either based on Value Instances or Matrix Instances.
 - An MNIST example can be found in the Matrix Based folder. The mnist data must be downloaded seperately (.csv).
+  - `./builds/mnist_training`
 
 # Value Based and Matrix Based computational Graph
 ## Value Based
