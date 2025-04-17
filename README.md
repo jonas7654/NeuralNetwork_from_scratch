@@ -13,3 +13,4 @@
   - Each Instance holds a _backward function in order to backpropagate throught the network via autodiff.
 ## Matrix Based
   - Matrix Based only creates Matrix nodes within the computational Graph and backpropagates through the network via autodiff.
+  - Each Matrix Node holds a _backward function
